@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Price and Indicators Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+</head>
+<body>
+    <h1>Live Bitcoin Price</h1>
+    <canvas id="priceChart"></canvas>
+    <h1>Bitcoin Indicators - SMA & EMA</h1>
+    <canvas id="indicatorChart"></canvas>
+
+    <script>
+        const priceCtx = document.getElementById('priceChart').getContext('2d');
+        const indicatorCtx = document.getElementById('indicatorChart').getContext('2d');
+
+        const priceChart = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Bitcoin Price',
+                    borderColor: 'rgb(75, 192, 192)',
+                    fill: false,
+                    lineTension: 0.1,
+                    data: []
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'realtime',
+                        realtime: {
+                            delay: 2000,
+                            onRefresh: chart => fetchDataAndUpdate(chart)
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true
+                    }
+                }
+            }
+        });
+
+        const indicatorChart = new Chart(indicatorCtx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'SMA',
+                    borderColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    lineTension: 0.1,
+                    data: []
+                }, {
+                    label: 'EMA',
+                    borderColor: 'rgb(100, 149, 237)',
+                    fill: false,
+                    lineTension: 0.1,
+                    data: []
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'realtime',
+                        realtime: {
+                            delay: 2000,
+                            onRefresh: chart => fetchDataAndUpdate(chart)
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true
+                    }
+                }
+            }
+        });
+
+        function fetchDataAndUpdate(chart) {
+            fetch('http://localhost:5001/price')
+                .then(response => response.json())
+                .then(data => {
+                    const now = Date.now();
+                    // Update price chart
+                    chart.data.datasets[0].data.push({
+                        x: now,
+                        y: data.price
+                    });
+                    // Update indicators chart
+                    if (data.sma !== undefined) {
+                        indicatorChart.data.datasets[0].data.push({
+                            x: now,
+                            y: data.sma
+                        });
+                    }
+                    if (data.ema !== undefined) {
+                        indicatorChart.data.datasets[1].data.push({
+                            x: now,
+                            y: data.ema
+                        });
+                    }
+                    chart.update();
+                    indicatorChart.update();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+    </script>
+</body>
+</html>
