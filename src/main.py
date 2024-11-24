@@ -21,12 +21,13 @@ def home():
     print("Template folder:", app.template_folder)
     return render_template('index.html')
 
+
 @app.route('/price')
 def get_price():
-    # Generate the next price using the GBM model
     price = simulator.simulate_next_price()
-    # Return the new price as a JSON response
-    return jsonify({'price': price})
+    sma = simulator.get_sma()
+    ema = simulator.get_ema()
+    return jsonify({'price': price, 'sma': sma, 'ema': ema})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
