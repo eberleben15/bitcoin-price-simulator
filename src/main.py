@@ -1,15 +1,19 @@
 from flask import Flask, jsonify, render_template
 from simulator import generate_price_series
 from logger import get_logger
+from BitcoinSimulatorGBM import BitcoinSimulatorGBM
+import os
 
-app = Flask(__name__, static_folder='web', template_folder='web')
+# Set up the directory path relative to the main.py file
+current_directory = os.path.dirname(os.path.abspath(__file__))
+template_directory = os.path.join(current_directory, '../web')
+
+app = Flask(__name__, static_folder=template_directory, template_folder=template_directory)
+
 logger = get_logger()
 
-# Initialize with a reasonable starting base price
-current_price = 20000
-
-
-app = Flask(__name__, static_folder='web', template_folder='web')
+# Create an instance of the BitcoinSimulatorGBM
+simulator = BitcoinSimulatorGBM()
 
 @app.route('/')
 def home():
@@ -19,11 +23,10 @@ def home():
 
 @app.route('/price')
 def get_price():
-    global current_price
-    current_price = generate_price_series(last_price=current_price)
-    logger.debug(f"Current simulated price fetched: ${current_price:.2f}")  # Log the price fetched
-    return jsonify({'price': current_price})
+    # Generate the next price using the GBM model
+    price = simulator.simulate_next_price()
+    # Return the new price as a JSON response
+    return jsonify({'price': price})
 
 if __name__ == '__main__':
-    logger.info("Starting the Bitcoin price simulator server...")
     app.run(debug=True, host='0.0.0.0', port=5000)

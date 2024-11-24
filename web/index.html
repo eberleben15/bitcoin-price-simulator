@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Price Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script> <!-- Date adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
 </head>
 <body>
     <h1>Live Bitcoin Price Simulation</h1>
@@ -14,12 +16,11 @@
         const priceChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],
                 datasets: [{
                     label: 'Bitcoin Price',
-                    data: [],
                     borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    tension: 0.1,
+                    data: []
                 }]
             },
             options: {
@@ -30,15 +31,25 @@
                             delay: 2000,
                             refresh: 1000,
                             onRefresh: function(chart) {
-                                fetch('http://localhost:5000/price')
+                                fetch('http://localhost:5001/price')
                                     .then(response => response.json())
                                     .then(data => {
-                                        chart.data.labels.push(Date.now());
-                                        chart.data.datasets.forEach((dataset) => {
-                                            dataset.data.push(data.price);
+                                        chart.data.datasets[0].data.push({
+                                            x: Date.now(),
+                                            y: data.price
                                         });
-                                    });
+                                        chart.update();
+                                    })
+                                    .catch(error => console.error('Error fetching data:', error));
                             }
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Price ($)'
                         }
                     }
                 }

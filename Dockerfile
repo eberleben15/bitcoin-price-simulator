@@ -9,12 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
 COPY web ./web
 
-
-# Ensure all files are accessible
-RUN chmod -R 644 ./web \
-    && adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
-
-USER appuser
+# Ensure all files in the web directory are readable
+RUN chmod -R 644 ./web
 
 CMD ["python", "src/main.py"]
